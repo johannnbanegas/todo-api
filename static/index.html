@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To-Do App Full Stack</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 50px auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
+
+        .status-online {
+            background: #48bb78;
+        }
+
+        .status-offline {
+            background: #f56565;
+        }
+
+        .input-section {
+            padding: 30px;
+            background: #f7fafc;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        #nuevaTarea {
+            flex: 1;
+            padding: 15px 20px;
+            font-size: 1.1em;
+            border: 2px solid #cbd5e0;
+            border-radius: 10px;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        #nuevaTarea:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        #agregarBtn {
+            padding: 15px 30px;
+            font-size: 1.1em;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        #agregarBtn:hover:not(:disabled) {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        #agregarBtn:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+        }
+
+        .tareas-list {
+            padding: 30px;
+            min-height: 200px;
+        }
+
+        .estadisticas {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f7fafc;
+            border-radius: 10px;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-numero {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            color: #718096;
+            margin-top: 5px;
+        }
+
+        .tarea-item {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 15px 20px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: all 0.3s;
+            animation: aparecer 0.3s ease-out;
+        }
+
+        @keyframes aparecer {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .tarea-item:hover {
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .tarea-item.completada {
+            background: #f0fff4;
+            border-color: #9ae6b4;
+        }
+
+        .tarea-item.completada .tarea-texto {
+            text-decoration: line-through;
+            color: #a0aec0;
+        }
+
+        .checkbox {
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            accent-color: #48bb78;
+        }
+
+        .tarea-texto {
+            flex: 1;
+            font-size: 1.1em;
+            color: #2d3748;
+        }
+
+        .eliminar-btn {
+            background: #f56565;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .eliminar-btn:hover {
+            background: #e53e3e;
+            transform: scale(1.05);
+        }
+
+        .mensaje-vacio {
+            text-align: center;
+            padding: 40px;
+            color: #a0aec0;
+            font-size: 1.2em;
+        }
+
+        .mensaje-vacio span {
+            font-size: 3em;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #667eea;
+            font-size: 1.2em;
+        }
+
+        .loading::after {
+            content: '...';
+            animation: dots 1.5s steps(4, end) infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
+        }
+
+        .error-message {
+            background: #fed7d7;
+            border: 2px solid #fc8181;
+            color: #742a2a;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .tutorial {
+            background: #e6fffa;
+            border-left: 4px solid #38b2ac;
+            padding: 20px;
+            margin: 20px 30px;
+            border-radius: 8px;
+        }
+
+        .tutorial h3 {
+            color: #234e52;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .tutorial-item {
+            margin: 10px 0;
+            padding-left: 20px;
+            position: relative;
+            color: #2d3748;
+        }
+
+        .tutorial-item::before {
+            content: "🔗";
+            position: absolute;
+            left: 0;
+        }
+
+        .tutorial code {
+            background: #2d3748;
+            color: #48bb78;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📝 To-Do App Full Stack</h1>
+            <p>Frontend + Backend + API REST</p>
+            <div class="status-badge status-offline" id="statusBadge">
+                🔴 Desconectado
+            </div>
+        </div>
+
+        <div class="input-section">
+            <div class="input-group">
+                <input 
+                    type="text" 
+                    id="nuevaTarea" 
+                    placeholder="Escribe una nueva tarea..."
+                    autocomplete="off"
+                >
+                <button id="agregarBtn">➕ Agregar</button>
+            </div>
+        </div>
+
+        <div class="tareas-list">
+            <div class="estadisticas">
+                <div class="stat">
+                    <div class="stat-numero" id="totalTareas">0</div>
+                    <div class="stat-label">Total</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-numero" id="tareasCompletadas">0</div>
+                    <div class="stat-label">Completadas</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-numero" id="tareasPendientes">0</div>
+                    <div class="stat-label">Pendientes</div>
+                </div>
+            </div>
+
+            <div id="listaTareas">
+                <div class="loading">Cargando tareas</div>
+            </div>
+        </div>
+
+        <div class="tutorial">
+            <h3>🎓 Full Stack Concepts</h3>
+            <div class="tutorial-item">
+                <code>fetch()</code> - Hace peticiones HTTP al backend
+            </div>
+            <div class="tutorial-item">
+                <code>async/await</code> - Maneja operaciones asíncronas
+            </div>
+            <div class="tutorial-item">
+                <code>JSON</code> - Formato de intercambio de datos
+            </div>
+            <div class="tutorial-item">
+                <code>REST API</code> - Arquitectura cliente-servidor
+            </div>
+            <div class="tutorial-item">
+                Las tareas se guardan en base de datos SQLite 🗄️
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:5000/api/tareas';
+        
+        const inputTarea = document.getElementById('nuevaTarea');
+        const botonAgregar = document.getElementById('agregarBtn');
+        const listaTareas = document.getElementById('listaTareas');
+        const totalTareasElemento = document.getElementById('totalTareas');
+        const completadasElemento = document.getElementById('tareasCompletadas');
+        const pendientesElemento = document.getElementById('tareasPendientes');
+        const statusBadge = document.getElementById('statusBadge');
+
+        async function verificarConexion() {
+            try {
+                const response = await fetch('http://localhost:5000/');
+                if (response.ok) {
+                    statusBadge.textContent = '🟢 Conectado';
+                    statusBadge.className = 'status-badge status-online';
+                    console.log('✅ Conectado al backend');
+                    return true;
+                }
+            } catch (error) {
+                statusBadge.textContent = '🔴 Backend no disponible';
+                statusBadge.className = 'status-badge status-offline';
+                console.error('❌ Error conectando al backend:', error);
+                return false;
+            }
+        }
+
+        async function obtenerTareas() {
+            try {
+                console.log('📡 Obteniendo tareas del servidor...');
+                
+                const response = await fetch(API_URL);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const tareas = await response.json();
+                console.log('✅ Tareas obtenidas:', tareas);
+                
+                renderizarTareas(tareas);
+                actualizarEstadisticas(tareas);
+                
+            } catch (error) {
+                console.error('❌ Error obteniendo tareas:', error);
+                mostrarError('No se pudieron cargar las tareas. ¿Está el servidor corriendo?');
+            }
+        }
+
+        async function crearTarea(texto) {
+            try {
+                console.log('📡 Creando nueva tarea:', texto);
+                
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ texto: texto })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const nuevaTarea = await response.json();
+                console.log('✅ Tarea creada:', nuevaTarea);
+
+                await obtenerTareas();
+                
+            } catch (error) {
+                console.error('❌ Error creando tarea:', error);
+                alert('Error al crear la tarea');
+            }
+        }
+
+        async function actualizarTarea(id, completada) {
+            try {
+                console.log(`📡 Actualizando tarea ${id}, completada: ${completada}`);
+                
+                const response = await fetch(`${API_URL}/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ completada: completada })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const tareaActualizada = await response.json();
+                console.log('✅ Tarea actualizada:', tareaActualizada);
+
+                await obtenerTareas();
+                
+            } catch (error) {
+                console.error('❌ Error actualizando tarea:', error);
+                alert('Error al actualizar la tarea');
+            }
+        }
+
+        async function eliminarTarea(id) {
+            try {
+                console.log(`📡 Eliminando tarea ${id}`);
+                
+                const response = await fetch(`${API_URL}/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const resultado = await response.json();
+                console.log('✅ Tarea eliminada:', resultado);
+
+                await obtenerTareas();
+                
+            } catch (error) {
+                console.error('❌ Error eliminando tarea:', error);
+                alert('Error al eliminar la tarea');
+            }
+        }
+
+        function renderizarTareas(tareas) {
+            if (tareas.length === 0) {
+                listaTareas.innerHTML = `
+                    <div class="mensaje-vacio">
+                        <span>📋</span>
+                        No hay tareas. ¡Agrega una para comenzar!
+                    </div>
+                `;
+                return;
+            }
+
+            listaTareas.innerHTML = '';
+
+            tareas.forEach(tarea => {
+                const tareaHTML = `
+                    <div class="tarea-item ${tarea.completada ? 'completada' : ''}">
+                        <input 
+                            type="checkbox" 
+                            class="checkbox" 
+                            ${tarea.completada ? 'checked' : ''}
+                            onchange="toggleTarea(${tarea.id}, this.checked)"
+                        >
+                        <span class="tarea-texto">${tarea.texto}</span>
+                        <button class="eliminar-btn" onclick="eliminarTareaClick(${tarea.id})">
+                            🗑️ Eliminar
+                        </button>
+                    </div>
+                `;
+                listaTareas.innerHTML += tareaHTML;
+            });
+        }
+
+        function actualizarEstadisticas(tareas) {
+            const total = tareas.length;
+            const completadas = tareas.filter(t => t.completada).length;
+            const pendientes = total - completadas;
+
+            totalTareasElemento.textContent = total;
+            completadasElemento.textContent = completadas;
+            pendientesElemento.textContent = pendientes;
+        }
+
+        function mostrarError(mensaje) {
+            listaTareas.innerHTML = `
+                <div class="error-message">
+                    ❌ ${mensaje}
+                </div>
+            `;
+        }
+
+        window.toggleTarea = async function(id, completada) {
+            await actualizarTarea(id, completada);
+        };
+
+        window.eliminarTareaClick = async function(id) {
+            if (confirm('¿Estás seguro de eliminar esta tarea?')) {
+                await eliminarTarea(id);
+            }
+        };
+
+        botonAgregar.addEventListener('click', async () => {
+            const texto = inputTarea.value.trim();
+            
+            if (texto === '') {
+                alert('❌ Por favor escribe una tarea');
+                return;
+            }
+
+            botonAgregar.disabled = true;
+            botonAgregar.textContent = '⏳ Agregando...';
+
+            await crearTarea(texto);
+
+            inputTarea.value = '';
+            inputTarea.focus();
+            botonAgregar.disabled = false;
+            botonAgregar.textContent = '➕ Agregar';
+        });
+
+        inputTarea.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter') {
+                botonAgregar.click();
+            }
+        });
+
+        async function inicializar() {
+            console.log('🚀 Inicializando aplicación...');
+            
+            const conectado = await verificarConexion();
+            
+            if (conectado) {
+                await obtenerTareas();
+            } else {
+                mostrarError('No se puede conectar con el servidor. Asegúrate de que Flask esté corriendo.');
+            }
+        }
+
+        inicializar();
+
+        console.log('📚 Conceptos Full Stack que estás usando:');
+        console.log('  - Fetch API: Comunicación HTTP');
+        console.log('  - Async/Await: Operaciones asíncronas');
+        console.log('  - REST API: GET, POST, PUT, DELETE');
+        console.log('  - JSON: Intercambio de datos');
+        console.log('  - SQLite: Persistencia de datos');
+    </script>
+</body>
+</html>
